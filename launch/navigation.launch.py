@@ -24,10 +24,11 @@ from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 
-MAP_NAME='upstairs'
-#MAP_NAME='office' #change to the name of your own map here
-#MAP_NAME='backyard' #change to the name of your own map here
-#MAP_NAME='downstairs' #change to the name of your own map here
+#change to the name of your own map here or specify map via param
+#MAP_NAME='upstairs2'
+#MAP_NAME='backyard'
+MAP_NAME='backyard_simple'
+#MAP_NAME='downstairs'
 
 def generate_launch_description():
     nav2_launch_path = PathJoinSubstitution(
