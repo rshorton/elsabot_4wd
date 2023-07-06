@@ -49,9 +49,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            name='sim', 
+            name='use_sim_time', 
             default_value='false',
-            description='Enable use_sime_time to true'
+            description='Use simulation time'
         ),
 
         DeclareLaunchArgument(
@@ -70,7 +70,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(nav2_launch_path),
             launch_arguments={
                 'map': LaunchConfiguration("map"),
-                'use_sim_time': LaunchConfiguration("sim"),
+                'use_sim_time': LaunchConfiguration("use_sim_time"),
                 'params_file': nav2_config_path
             }.items()
         ),
@@ -82,6 +82,6 @@ def generate_launch_description():
             output='screen',
             arguments=['-d', rviz_config_path],
             condition=IfCondition(LaunchConfiguration("rviz")),
-            parameters=[{'use_sim_time': LaunchConfiguration("sim")}]
+            parameters=[{'use_sim_time': LaunchConfiguration("use_sim_time")}]
         )
     ])
