@@ -1,3 +1,7 @@
+# Useful documentation:
+# http://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
+# https://vimeo.com/142624091
+
 ekf_filter_node:
     ros__parameters:
         frequency: 20.0

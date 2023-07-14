@@ -5,6 +5,7 @@
   <xacro:include filename="$(find elsabot_4wd)/urdf/mech/base.urdf.xacro" />
   <xacro:include filename="$(find elsabot_4wd)/urdf/mech/wheel.urdf.xacro" />
   <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/imu.urdf.xacro" />
+  <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/gps.urdf.xacro" />
   <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/generic_laser.urdf.xacro" />
   <!--xacro:include filename="$(find elsabot_4wd)/urdf/sensors/depth_sensor.urdf.xacro" /-->
   <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/oakd_on_ptbase.urdf.xacro" />
@@ -59,6 +60,7 @@
   />
 
   <xacro:imu/>
+  <xacro:gps/>
   
   <xacro:generic_laser>
     <xacro:insert_block name="laser_pose" />
@@ -68,18 +70,19 @@
     <xacro:insert_block name="depth_sensor_pose" />
   </xacro:depth_sensor>
 
+ <xacro:diff_drive_controller
+    wheel_separation="${wheel_pos_y * 2}"
+    wheel_radius="${wheel_radius}"
+    wheel_torque="${wheel_torque}"
+  />
+
   <gazebo>
     <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher"/>
     <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
-    <plugin filename="ignition-gazebo-imu-system" name="ignition::gazebo::systems::Imu">
-    </plugin>
+    <plugin filename="ignition-gazebo-imu-system" name="ignition::gazebo::systems::Imu"/>
+    <plugin filename="ignition-gazebo-navsat-system" name="ignition::gazebo::systems::NavSat"/>
   </gazebo>
 
-  <xacro:diff_drive_controller
-    wheel_separation="${wheel_pos_y * 2}"
-    wheel_radius="${wheel_radius}"
-    wheel_torque="${wheel_torque}"
-  />
-</robot>
+ </robot>

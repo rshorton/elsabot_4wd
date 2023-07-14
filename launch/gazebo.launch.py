@@ -19,18 +19,16 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-
 from launch_ros.actions import Node, SetParameter
-
-from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, EnvironmentVariable
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, EnvironmentVariable, PythonExpression
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
-
 
 def generate_launch_description():
 
     urdf_path = PathJoinSubstitution(
-        [FindPackageShare("elsabot_4wd"), "urdf/robots", f"4wd.urdf.xacro"]
+        [FindPackageShare('elsabot_4wd'), 'urdf/robots', f"4wd.urdf.xacro"]
     )
 
     sensors_launch_path = PathJoinSubstitution(
@@ -41,105 +39,154 @@ def generate_launch_description():
         [FindPackageShare('elsabot_4wd'), 'launch', 'description.launch.py']
     )
 
-    ekf_config_path = PathJoinSubstitution(
-        [FindPackageShare("elsabot_4wd"), "config", "ekf.yaml"]
-    )
-
     params = {'use_sim_time': True, 'robot_description': Command(['xacro ', LaunchConfiguration('urdf')])}
 
-    # Gazebo Sim
-    pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={
-            #'gz_args': '-r empty.sdf'
-            'gz_args': '-r ' +  os.path.join(get_package_share_directory('elsabot_4wd'), 'gazebo_worlds', 'my_world4.sdf')
-        }.items(),
-    )
-
-    # RViz
-    pkg_ros_gz_sim_demos = get_package_share_directory('ros_gz_sim_demos')
-    rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        arguments=[
-            '-d',
-            os.path.join(pkg_ros_gz_sim_demos, 'rviz', 'robot_description_publisher.rviz')
-        ]
-    )
-
-    # Spawn
-    spawn = Node(package='ros_gz_sim', executable='create',
-                 arguments=[
-                    '-name', 'elsabot_4wd',
-                    '-x', '0.0',
-                    '-y', '0.0',
-                    '-z', '-0.02',
-                    '-topic', '/robot_description'
-                    ],
-                 output='screen')
-
-    # Bridge
-    bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=['/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-                   '/odom/unfiltered@nav_msgs/msg/Odometry@gz.msgs.Odometry',
-                   '/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
-                   '/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU',
-                   '/model/elsabot_4wd/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
-                   '/world/empty/model/elsabot_4wd/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model',
-                   '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-
-                   ],
-        parameters=[{'qos_overrides./model/elsabot_4wd.subscriber.reliability': 'reliable'}],
-        remappings=[('/world/empty/model/elsabot_4wd/joint_state', 'joint_states'),
-                    #('/model/elsabot_4wd/tf', 'tf'),
-                   ],
-        output='screen'
-    )
-
-    description = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(description_launch_path),
-        launch_arguments={
-            'use_sim_time': 'true',
-            'publish_joints': 'true',
-        }.items()
-    )
-
-    cmd_timeout = Node(
-        package='cmd_vel_timeout',
-        executable='command_timeout',
-        name='command_timeout_node',
-        output='screen',
-    )
-
-    robot_localization = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[
-            ekf_config_path
-        ],
-        remappings=[("odometry/filtered", "odom")]
-    )
+    use_gps = LaunchConfiguration('use_gps')
 
     return LaunchDescription([
         SetParameter(name='use_sim_time', value=True),
 
         DeclareLaunchArgument(
-            name='urdf', 
-            default_value=urdf_path,
-            description='URDF path'
+            name='use_gps', 
+            default_value='False',
+            description='Set to True to use GPS'
         ),
 
-        gazebo,
-        spawn,
-        bridge,
-        description,
-        cmd_timeout,
-        robot_localization,
-        #rviz
+        # Gazebo Sim
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')),
+            launch_arguments={
+                #'gz_args': '-r empty.sdf'
+                'gz_args': '-r ' +  os.path.join(get_package_share_directory('elsabot_4wd'), 'gazebo_worlds', 'my_world4.sdf')
+            }.items(),
+        ),   
+
+        # Robot            
+        Node(package='ros_gz_sim', executable='create',
+            arguments=[
+                '-name', 'elsabot_4wd',
+                '-x', '0.0',
+                '-y', '0.0',
+                '-z', '-0.02',
+                '-topic', '/robot_description'
+            ],
+            output='screen'
+        ),
+
+        # Bridge
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            arguments=[
+                '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+                '/odom/unfiltered@nav_msgs/msg/Odometry@gz.msgs.Odometry',
+                '/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
+                '/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU',
+                '/model/elsabot_4wd/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
+                '/world/empty/model/elsabot_4wd/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model',
+                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+                '/navsat@sensor_msgs/msg/NavSatFix@gz.msgs.NavSat'
+            ],
+            parameters=[
+                {'qos_overrides./model/elsabot_4wd.subscriber.reliability': 'reliable'}
+            ],
+            remappings=[
+                ('/world/empty/model/elsabot_4wd/joint_state', 'joint_states'),
+                ('elsabot_4wd/base_footprint/navsat', 'gps_link'),
+                ('/navsat','/gps/fix'),
+            ],
+            output='screen'
+        ),
+
+        # Robot description
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(description_launch_path),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'publish_joints': 'true',
+            }.items()
+        ),
+
+        # Node for sending cmd_vel 'stop' if no new cmd_vel updates
+        Node(
+            package='cmd_vel_timeout',
+            executable='command_timeout',
+            name='command_timeout_node',
+            output='screen',
+        ),
+
+        # Robot localization for fusing IMU with base odometry (when not using GPS)
+        Node(
+            condition=IfCondition(
+                PythonExpression([
+                    'not ',
+                    use_gps,
+                ])
+            ),
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf.yaml'])
+            ],
+            remappings=[
+                ('odometry/filtered', 'odometry/local')
+            ]
+        ),
+
+        # Fuse IMU with base odometry (when using GPS)
+        Node(
+            condition=IfCondition(LaunchConfiguration('use_gps')),
+            package='robot_localization',
+            executable='ekf_node',
+            name='local_ekf_filter_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
+            ],
+            remappings=[
+                ('odometry/filtered', 'odometry/local')
+            ]
+        ),
+
+        # Fuse GPS with base odometry and IMU (when using GPS)
+        Node(
+            condition=IfCondition(LaunchConfiguration('use_gps')),
+            package='robot_localization',
+            executable='ekf_node',
+            name='global_ekf_filter_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
+            ],
+            remappings=[
+                ('odometry/filtered', 'odometry/global')
+            ]
+        ),
+
+        # Run NavSat transform for converting GPS coords into UTM coords
+        # and offseting to the initial position
+        Node(
+            condition=IfCondition(LaunchConfiguration('use_gps')),
+            package='robot_localization',
+            executable='navsat_transform_node',
+            name='navsat_transform_node',
+            output='screen',
+            parameters=[
+                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
+            ],
+            remappings=[
+                # Subs
+                ('gps/fix', 'gps/fix'),
+                ('imu', 'imu/data'),
+                ('odometry/filtered', 'odometry/global'),
+                # Pubs
+                ('gps/filtered', 'gps/filtered'),
+                ('odometry/gps', 'odometry/gps'),
+            ],
+            arguments=['--ros-args', '--log-level', 'info'],
+        )
     ])
+  
