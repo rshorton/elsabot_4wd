@@ -1,10 +1,11 @@
 # Useful documentation:
 # http://docs.ros.org/en/melodic/api/robot_localization/html/state_estimation_nodes.html
 # https://vimeo.com/142624091
+# https://www.robotandchisel.com/2020/05/01/outdoor-navigation/
 
 local_ekf_filter_node:
     ros__parameters:
-        frequency: 20.0
+        frequency: 5.0
         two_d_mode: true
         publish_tf: true
  
@@ -31,10 +32,13 @@ local_ekf_filter_node:
                       false, false, false,
                       false, false, true,
                       false, false, false]
+        imu0_differential: true
+        imu0_remove_gravitational_acceleration: true                      
+
 
 global_ekf_filter_node:
     ros__parameters:
-        frequency: 20.0
+        frequency: 5.0
         two_d_mode: true
         publish_tf: true
  
@@ -67,18 +71,20 @@ global_ekf_filter_node:
         odom0_nodelay: true
         odom0_queue_size: 10
 
+        # More useful data is available in the
+        # imu message after the Madgwich filtering
         imu0: imu/data
         imu0_config: [false, false, false,
+                      true,  true,  true,
                       false, false, false,
-                      false, false, false,
-                      false, false, true,
-                      false, false, false]
-
+                      true,  true,  true,
+                      true,  true,  true]
+        imu0_remove_gravitational_acceleration: true
 
 navsat_transform_node:
     ros__parameters:
 # Frequency of the main run loop
-        frequency: 20.0
+        frequency: 5.0
 
 # Delay time, in seconds, before we calculate the transform from the UTM frame to your world frame. This is especially
 # important if you have use_odometry_yaw set to true. Defaults to 0.
@@ -101,7 +107,9 @@ navsat_transform_node:
         zero_altitude: true
 
 # If this is true, the transform world_frame->utm transform is broadcast for use by other nodes. Defaults to false.
-        broadcast_utm_transform: true
+        # Deprecated name
+        #broadcast_utm_transform: true
+        broadcast_cartesian_transform: false
 
 # If this is true, the utm->world_frame transform will be published instead of the world_frame->utm transform. 
 # Note that broadcast_utm_transform still has to be enabled. Defaults to false.

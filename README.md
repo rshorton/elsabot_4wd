@@ -26,6 +26,7 @@ Other
 * sudo apt install ros-humble-rosbridge-suite
 * sudo apt install ros-humble-robot-localization
 * sudo apt install ros-humble-joy-linux
+* sudo apt install ros-humble-imu-filter-madgwick
 * (probably others, sorry)
 
 Development Machine

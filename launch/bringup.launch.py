@@ -51,53 +51,67 @@ def generate_launch_description():
         [FindPackageShare('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml']
     )
 
-    ekf_config_path = PathJoinSubstitution(
-        [FindPackageShare("elsabot_4wd"), "config", "ekf.yaml"]
-    )
-
     rviz_config_path = PathJoinSubstitution(
         [FindPackageShare('elsabot_4wd'), 'rviz', 'navigation.rviz']
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            'map',
+            name='use_gps', 
+            default_value='False',
+            description='Set to True to use GPS'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_serial_port', 
+            default_value='/dev/PX1122R_gps',
+            description='Serial port connected to GPS module'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_serial_baud_rate', 
+            default_value='115200',
+            description='Baud rate of GPS serial port'
+        ),
+
+        DeclareLaunchArgument(
+            name='map',
             default_value=os.path.join(elsabot_4wd_dir, 'maps', f'{MAP_NAME}.yaml'),
             description='Full path to map yaml file to load'
         ),
 
         DeclareLaunchArgument(
-            'nav2_params_file',
+            name='nav2_params_file',
             default_value=os.path.join(elsabot_4wd_dir, 'config', 'navigation.yaml'),
             description='Full path to the ROS2 parameters file to use for all launched nodes'
         ),
 
         DeclareLaunchArgument(
-            'use_sim_time',
+            name='use_sim_time',
             default_value='false',
             description='Use simulation (Gazebo) clock if true'
         ),
 
         DeclareLaunchArgument(
-            'autostart',
+            name='autostart',
             default_value='true',
             description='Automatically startup the nav2 stack'
         ),
 
         DeclareLaunchArgument(
-            'slam',
+            name='slam',
             default_value='False',
             description='Run SLAM to create a map'
         ),
 
         DeclareLaunchArgument(
-            'use_keep_out',
+            name='use_keep_out',
             default_value='False',
             description='Enable use of keep-out area map'
         ),
 
         DeclareLaunchArgument(
-            'use_nav',
+            name='use_nav',
             default_value='False',
             description='Enable also start nav2'
         ),
@@ -128,17 +142,6 @@ def generate_launch_description():
             arguments=['serial', '--dev', LaunchConfiguration("base_serial_port")]
         ),
 
-        Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[
-                ekf_config_path
-            ],
-            remappings=[("odometry/filtered", "odometry/local")]
-        ),
-
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(description_launch_path)
         ),
@@ -154,14 +157,15 @@ def generate_launch_description():
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
+                os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
             condition=IfCondition(LaunchConfiguration("use_nav")),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration("use_sim_time"),
                 'autostart': LaunchConfiguration("autostart"),
                 'map': LaunchConfiguration("map"),
                 'slam': LaunchConfiguration("slam"),
-                'params_file': LaunchConfiguration("nav2_params_file")}.items()
+                'params_file': LaunchConfiguration("nav2_params_file")
+            }.items()
         ),
 
         # Conditionally start the map servers for supporting a map keep-out area
@@ -171,16 +175,39 @@ def generate_launch_description():
             condition=IfCondition(LaunchConfiguration("use_keep_out")),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration("use_sim_time"),
-                'autostart': LaunchConfiguration("autostart")}.items()
+                'autostart': LaunchConfiguration("autostart")
+            }.items()
+        ),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'sensor_fusion.launch.py')),
+            launch_arguments={
+                'use_sim_time': LaunchConfiguration("use_sim_time"),
+                'use_gps': LaunchConfiguration("use_gps"),
+            }.items()
         ),
 
         Node(
+            condition=IfCondition(LaunchConfiguration("use_gps")),
+            package='nmea_navsat_driver',
+            executable='nmea_serial_driver',
+            output='screen',
+            parameters=[
+                {'port': LaunchConfiguration("gps_serial_port")},
+                {'baud': LaunchConfiguration("gps_serial_baud_rate")},
+                {'frame_id': 'gps_link'}
+            ],
+            remappings=[('fix', 'gps/fix')]
+        ),
+
+        Node(
+            condition=IfCondition(LaunchConfiguration("rviz")),
             package='rviz2',
             executable='rviz2',
             name='rviz2',
             output='screen',
             arguments=['-d', rviz_config_path],
-            condition=IfCondition(LaunchConfiguration("rviz")),
             parameters=[{'use_sim_time': LaunchConfiguration("use_sim_time")}]
         ),
 

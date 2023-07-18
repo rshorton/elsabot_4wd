@@ -27,9 +27,9 @@ from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
 
 #change to the name of your own map here or specify map via param
-#MAP_NAME='upstairs2'
+MAP_NAME='upstairs2'
 #MAP_NAME='backyard'
-MAP_NAME='backyard_simple'
+#MAP_NAME='backyard_simple'
 #MAP_NAME='downstairs'
 
 def generate_launch_description():
