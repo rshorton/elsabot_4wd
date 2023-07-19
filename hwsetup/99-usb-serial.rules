@@ -3,6 +3,7 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="1546",ATTRS{idProduct}=="01a7", SYMLINK+="ub
 
 # Use specific USB ports for these since they cannot be uniquely identified (both use the CP2102)
 KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.4", SYMLINK+="PX1122R_gps", MODE="0666"
+KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.1", SYMLINK+="PX1122R_gps_rtcm", MODE="0666"
 KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.3", SYMLINK+="rplidar", MODE="0666"
 
 # Use a specific USB port for this one also since another ch341-based device is sometimes used
