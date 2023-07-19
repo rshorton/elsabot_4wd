@@ -25,7 +25,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 MAP_NAME='upstairs2'
 #MAP_NAME='backyard'
@@ -63,15 +63,9 @@ def generate_launch_description():
         ),
 
         DeclareLaunchArgument(
-            name='gps_serial_port', 
-            default_value='/dev/PX1122R_gps',
-            description='Serial port connected to GPS module'
-        ),
-
-        DeclareLaunchArgument(
-            name='gps_serial_baud_rate', 
-            default_value='115200',
-            description='Baud rate of GPS serial port'
+            name='use_gps_rtk', 
+            default_value='False',
+            description='Set to True to use GPS RTK mode'
         ),
 
         DeclareLaunchArgument(
@@ -139,7 +133,7 @@ def generate_launch_description():
             executable='micro_ros_agent',
             name='micro_ros_agent',
             output='screen',
-            arguments=['serial', '--dev', LaunchConfiguration("base_serial_port")]
+            arguments=['serial', '--dev', LaunchConfiguration('base_serial_port')]
         ),
 
         IncludeLaunchDescription(
@@ -152,19 +146,19 @@ def generate_launch_description():
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(joy_launch_path),
-            condition=IfCondition(LaunchConfiguration("joy")),
+            condition=IfCondition(LaunchConfiguration('joy')),
         ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
-            condition=IfCondition(LaunchConfiguration("use_nav")),
+            condition=IfCondition(LaunchConfiguration('use_nav')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration("use_sim_time"),
-                'autostart': LaunchConfiguration("autostart"),
-                'map': LaunchConfiguration("map"),
-                'slam': LaunchConfiguration("slam"),
-                'params_file': LaunchConfiguration("nav2_params_file")
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'autostart': LaunchConfiguration('autostart'),
+                'map': LaunchConfiguration('map'),
+                'slam': LaunchConfiguration('slam'),
+                'params_file': LaunchConfiguration('nav2_params_file')
             }.items()
         ),
 
@@ -172,10 +166,10 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'keep_out_area.launch.py')),
-            condition=IfCondition(LaunchConfiguration("use_keep_out")),
+            condition=IfCondition(LaunchConfiguration('use_keep_out')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration("use_sim_time"),
-                'autostart': LaunchConfiguration("autostart")
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'autostart': LaunchConfiguration('autostart')
             }.items()
         ),
 
@@ -183,32 +177,28 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'sensor_fusion.launch.py')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration("use_sim_time"),
-                'use_gps': LaunchConfiguration("use_gps"),
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'use_gps': LaunchConfiguration('use_gps'),
             }.items()
         ),
 
-        Node(
-            condition=IfCondition(LaunchConfiguration("use_gps")),
-            package='nmea_navsat_driver',
-            executable='nmea_serial_driver',
-            output='screen',
-            parameters=[
-                {'port': LaunchConfiguration("gps_serial_port")},
-                {'baud': LaunchConfiguration("gps_serial_baud_rate")},
-                {'frame_id': 'gps_link'}
-            ],
-            remappings=[('fix', 'gps/fix')]
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'gps.launch.py')),
+            launch_arguments={
+               'use_gps_rtk': LaunchConfiguration('use_gps_rtk')
+            }.items(),
+            condition=IfCondition(LaunchConfiguration('use_gps'))
         ),
 
         Node(
-            condition=IfCondition(LaunchConfiguration("rviz")),
+            condition=IfCondition(LaunchConfiguration('rviz')),
             package='rviz2',
             executable='rviz2',
             name='rviz2',
             output='screen',
             arguments=['-d', rviz_config_path],
-            parameters=[{'use_sim_time': LaunchConfiguration("use_sim_time")}]
+            parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
         ),
 
         # web bridge (for proxying topics/actions to/from ros_web based applications)
