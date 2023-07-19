@@ -39,7 +39,7 @@ def generate_launch_description():
         [FindPackageShare('elsabot_4wd'), 'launch', 'description.launch.py']
     )
 
-    params = {'use_sim_time': True, 'robot_description': Command(['xacro ', LaunchConfiguration('urdf')])}
+#    params = {'use_sim_time': True, 'robot_description': Command(['xacro ', LaunchConfiguration('urdf')])}
 
     use_gps = LaunchConfiguration('use_gps')
 
