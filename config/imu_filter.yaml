@@ -6,9 +6,9 @@ imu_filter:
     constant_dt: 0.0
     publish_debug_topics: false
     world_frame: "enu"
-    gain: 0.1
+    gain: 0.01
     zeta: 0.0
-    mag_bias_x: 0.0
-    mag_bias_y: 0.0
-    mag_bias_z: 0.0
+    mag_bias_x: -0.000016
+    mag_bias_y: -0.00000044
+    mag_bias_z:  0.0001140
     orientation_stddev: 0.0
