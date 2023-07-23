@@ -188,7 +188,13 @@ str2str  -in serial://ttyUSB0:115200#rtcm3 -out ntrips://:whereswaldo@127.0.0.1:
 
 2. Created the gps.launch.py script to launch the rover-side.  It uses str2str, but in this case it connects to the NTRIP Caster, fetches the RTCM data, and then pushes that to the PX1122R-EVB of the robot (using the USB1 serial port of the module).
 
+#### RTK Testing
 
+Used the Map view of Foxglove to visualize the robot position on a map.  Also used Foxglove to visual a ROS bag capture created with teleop control of the robot (See https://foxglove.dev/docs/studio/connection/ros2, and use mcap to convert the bag):
+
+![GPS Plot](docs/foxglove_gps_plot.png)
+
+(Path was offset from the real-world map by approx. 1 meter since the RTK base position hasn't been precisely determined yet. - TODO using NOAA OPUS)
 
 
 
