@@ -31,7 +31,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='ntrip_caster_url', 
-            default_value='ntrip://elsabot:ebot1@192.168.86.128:2101/mcktx:rtcm1',
+            default_value='ntrip://elsabot:ebot1@192.168.86.145:2101/mcktx:rtcm1',
             description='NTRIP caster URL'
         ),
 
