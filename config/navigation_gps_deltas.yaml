@@ -1,0 +1,13 @@
+# This file contains deltas to be applied to the base navigation
+# config file for GPS mode.
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      rolling_window: true
+      width: 10
+      height: 10
+      # Removed "static_layer" for gps mode
+      plugins: ["obstacle_layer", "voxel3d_layer", "inflation_layer"]
+
+
