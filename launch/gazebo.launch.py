@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Various modifications by Scott Horton for Elsabot robots
+
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -21,7 +23,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, SetParameter
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, EnvironmentVariable, PythonExpression
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
 

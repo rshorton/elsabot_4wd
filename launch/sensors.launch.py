@@ -12,15 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import PathJoinSubstitution, PythonExpression
+from launch.actions import IncludeLaunchDescription
+from launch.substitutions import PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
-from launch.conditions import IfCondition
-from launch_ros.actions import Node
-
 
 def generate_launch_description():
 

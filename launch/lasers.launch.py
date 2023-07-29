@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Various modifications by Scott Horton for Elsabot robots
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
-from launch.conditions import IfCondition, LaunchConfigurationEquals
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
