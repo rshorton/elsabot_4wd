@@ -15,10 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+# Various modifications by Scott Horton for Elsabot robots
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution, EnvironmentVariable
+from launch.substitutions import LaunchConfiguration, Command, PathJoinSubstitution
 from launch.conditions import IfCondition
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -43,7 +44,7 @@ def generate_launch_description():
         
         DeclareLaunchArgument(
             name='publish_joints', 
-            default_value='true',
+            default_value='false',
             description='Launch joint_states_publisher'
         ),
 
@@ -64,9 +65,6 @@ def generate_launch_description():
             executable='joint_state_publisher',
             name='joint_state_publisher',
             condition=IfCondition(LaunchConfiguration("publish_joints"))
-            # parameters=[
-            #     {'use_sim_time': LaunchConfiguration('use_sim_time')}
-            # ] #since galactic use_sim_time gets passed somewhere and rejects this when defined from launch file
         ),
 
         Node(
@@ -92,8 +90,3 @@ def generate_launch_description():
             parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
         )
     ])
-
-#sources: 
-#https://navigation.ros.org/setup_guides/index.html#
-#https://answers.ros.org/question/374976/ros2-launch-gazebolaunchpy-from-my-own-launch-file/
-#https://github.com/ros2/rclcpp/issues/940
