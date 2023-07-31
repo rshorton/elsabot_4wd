@@ -18,6 +18,7 @@
 # Various modifications by Scott Horton for Elsabot robots
 
 import os
+import yaml
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -57,6 +58,11 @@ def generate_launch_description():
     rviz_config_path = PathJoinSubstitution(
         [FindPackageShare('elsabot_4wd'), 'rviz', 'navigation.rviz']
     )
+
+    # Load the cmd_vel_mux config since it expects the parameters vs the
+    cmd_vel_mux_config_file = os.path.join(get_package_share_directory('elsabot_4wd'), 'config', 'cmd_vel_mux.yaml')
+    with open(cmd_vel_mux_config_file, 'r') as f:
+        cmd_vel_mux_config = yaml.safe_load(f)['cmd_vel_mux']['ros__parameters']
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -150,18 +156,29 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(joy_launch_path),
             condition=IfCondition(LaunchConfiguration('joy')),
+            # Remap the output according to the cmd_vel_mux config
+            launch_arguments={
+                'cmd_vel_topic': 'cmd_vel/joy'
+            }.items()
+        ),
+
+        # Setup a mux to control the source of cmd_vel messages sent to the base
+        Node(
+            package='cmd_vel_mux',
+            executable='cmd_vel_mux_node',
+            output='screen',
+            parameters=[cmd_vel_mux_config]
         ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')),
+                os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'navigation.launch.py')),
             condition=IfCondition(LaunchConfiguration('use_nav')),
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'autostart': LaunchConfiguration('autostart'),
                 'map': LaunchConfiguration('map'),
                 'slam': LaunchConfiguration('slam'),
-                'params_file': LaunchConfiguration('nav2_params_file')
+                'use_gps': LaunchConfiguration('use_gps')
             }.items()
         ),
 

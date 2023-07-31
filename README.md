@@ -34,7 +34,9 @@ sudo apt install ros-humble-robot-localization
 sudo apt install ros-humble-joy-linux
 sudo apt install ros-humble-imu-filter-madgwick
 ```
-(probably others I missed, sorry)
+Clone and build:
+
+* Fork of cmd_vel_mux package:  https://github.com/rshorton/cmd_vel_mux
 
 
 Development Machine

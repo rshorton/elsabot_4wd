@@ -1,0 +1,31 @@
+# Individual subscriber configuration:
+#   name:           Source name
+#   topic:          The topic that provides cmd_vel messages
+#   timeout:        Time in seconds without incoming messages to consider this topic inactive
+#   priority:       Priority: an UNIQUE unsigned integer from 0 (lowest) to MAX_INT
+#   short_desc:     Short description
+
+cmd_vel_mux:
+  ros__parameters:
+    output_topic:     "cmd_vel/muxed"
+    subscribers:
+        nav:
+          topic:       "cmd_vel"
+          timeout:     0.1
+          priority:    0
+          short_desc:  "The default cmd_vel, controllers unaware that we are multiplexing cmd_vel should come here"
+        head_tracker:
+          topic:       "cmd_vel/tracker"
+          timeout:     0.1
+          priority:    5
+          short_desc:  "Navigation stack remote control"
+        joy_teleop:
+          topic:       "cmd_vel/joy"
+          timeout:     0.1
+          priority:    10
+          short_desc:  "Navigation stack remote control"
+        key_teleop:
+          topic:       "cmd_vel/key"
+          timeout:     0.1
+          priority:    7
+          short_desc:  "Keyboard operation"

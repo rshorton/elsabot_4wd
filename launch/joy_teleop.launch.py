@@ -15,10 +15,10 @@
 # Various modifications by Scott Horton for Elsabot robots
 
 from launch import LaunchDescription
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
-
 
 def generate_launch_description():
     joy_config_path = PathJoinSubstitution(
@@ -26,6 +26,12 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            name='cmd_vel_topic', 
+            default_value='cmd_vel',
+            description='Topic to publish cmd_vel messages'
+        ),        
+
         Node(
             package='joy_linux',
             executable='joy_linux_node',
@@ -38,6 +44,7 @@ def generate_launch_description():
             executable='teleop_node',
             name='teleop_twist_joy_node',
             output='screen',
-            parameters=[joy_config_path]
+            parameters=[joy_config_path],
+            remappings=[('cmd_vel', LaunchConfiguration('cmd_vel_topic'))]
         )
     ])
