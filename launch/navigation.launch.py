@@ -1,5 +1,19 @@
 # Portions of this file are from the Elsabot project by Scott Horton
-# and others from LinoRobot2
+# and others from LinoRobot2 and Nav2.
+
+# Copyright (c) 2018 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # Copyright (c) 2021 Juan Miguel Jimeno
 #
@@ -22,13 +36,14 @@ import subprocess
 import tempfile
 
 from launch import LaunchDescription, logging
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
-from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, GroupAction
+from launch.substitutions import LaunchConfiguration, NotSubstitution, AndSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node, SetParameter
 from nav2_common.launch import RewrittenYaml
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.actions import PushRosNamespace
 
 #change to the name of your own map here or specify map via param
 MAP_NAME='upstairs2'
@@ -54,8 +69,14 @@ def generate_launch_description():
     nav2_bt_to_pose_xml_path = os.path.join(get_package_share_directory('elsabot_4wd'), 'nav_bt', 'navigate_to_pose_w_replanning_and_recovery.xml')
     nav2_bt_follow_point_xml_path = os.path.join(get_package_share_directory('elsabot_4wd'), 'nav_bt', 'follow_point.xml')
 
-    nav2_bringup_launch_path = os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
-    nav2_launch_path = os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+    namespace = LaunchConfiguration('namespace')
+    use_namespace = LaunchConfiguration('use_namespace')
+    slam = LaunchConfiguration('slam')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    autostart = LaunchConfiguration('autostart')
+    use_respawn = LaunchConfiguration('use_respawn')
+    log_level = LaunchConfiguration('log_level')
+    use_composition = LaunchConfiguration('use_composition')
 
     # Use an OpaqueFunction to prepare the nav config and select the behavior tree
     # suitable for the specified launch options.  The OpaqueFunction allows the launch options
@@ -105,7 +126,8 @@ def generate_launch_description():
 
         param_substitutions = {
             'default_nav_through_poses_bt_xml': nav_through_poses_bt_xml,
-            'default_nav_to_pose_bt_xml': nav_to_pose_bt_xml
+            'default_nav_to_pose_bt_xml': nav_to_pose_bt_xml,
+            'yaml_filename': default_map_path
         }
 
         logger.debug("Using BTs: {}".format(str(param_substitutions)))
@@ -113,39 +135,67 @@ def generate_launch_description():
         # Re-write the nav parameters file to use our modified nav bt xml files.
         rewritten_yaml = RewrittenYaml(
             source_file=nav_yaml,
-            root_key='',
+            root_key=namespace,
             param_rewrites=param_substitutions,
             convert_types=True)
             
-        descriptions = [
-            # Use the full nav2 bringup launch script when using AMCL with a MAP.
-            # The bringup script launches localization and then the base nav2 ndoes.
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(nav2_bringup_launch_path),
-                launch_arguments={
-                    'map': LaunchConfiguration("map"),
-                    'use_sim_time': LaunchConfiguration("use_sim_time"),
-                    'slam': LaunchConfiguration("slam"),
-                    'params_file': rewritten_yaml,
-                }.items(),
-                condition=UnlessCondition(LaunchConfiguration("use_gps"))
-            ),
+        nav2_config_file = rewritten_yaml.perform(context)
+        # Dump the config to check it
+        logger.debug("complete nav yaml:\n")
+        with open(nav2_config_file, 'r') as f:
+            logger.info(f.read())
 
-            # Only launch the base nav2 nodes (without AMCL) when using GPS
-            # FIX - change to use composition
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(nav2_launch_path),
-                launch_arguments={
-                    'map': LaunchConfiguration("map"),
-                    'use_sim_time': LaunchConfiguration("use_sim_time"),
-                    'params_file': rewritten_yaml,
-                    'autostart': 'True',
-                    'use_composition': 'False',
-                    'use_respawn': 'False',
-                    #'container_name': 'nav2_container'
-                }.items(),
-                condition=IfCondition(LaunchConfiguration("use_gps"))
-            ),
+        descriptions = [
+            GroupAction([
+                PushRosNamespace(
+                    condition=IfCondition(use_namespace),
+                    namespace=namespace),
+
+                Node(
+                    condition=IfCondition(use_composition),
+                    name='nav2_container',
+                    package='rclcpp_components',
+                    executable='component_container_isolated',
+                    parameters=[nav2_config_file, {'autostart': autostart}],
+                    arguments=['--ros-args', '--log-level', log_level],
+                    remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')],
+                    output='screen'
+                ),
+
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'slam_launch.py')),
+                    condition=IfCondition(slam),
+                    launch_arguments={'namespace': namespace,
+                                    'use_sim_time': use_sim_time,
+                                    'autostart': autostart,
+                                    'use_respawn': use_respawn,
+                                    'params_file': nav2_config_file}.items()
+                ),
+
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'localization_launch.py')),
+                    condition=IfCondition( AndSubstitution( NotSubstitution(slam), NotSubstitution(use_gps) ) ),
+                    launch_arguments={'namespace': '',
+                                    'map': default_map_path,
+                                    'use_sim_time': use_sim_time,
+                                    'autostart': autostart,
+                                    'params_file': nav2_config_file,
+                                    'use_composition': use_composition,
+                                    'use_respawn': use_respawn,
+                                    'container_name': 'nav2_container'}.items()
+                ),
+
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')),
+                    launch_arguments={'namespace': namespace,
+                                    'use_sim_time': use_sim_time,
+                                    'autostart': autostart,
+                                    'params_file': nav2_config_file,
+                                    'use_composition': use_composition,
+                                    'use_respawn': use_respawn,
+                                    'container_name': 'nav2_container'}.items()
+                )
+            ])
         ]
         return descriptions;
 
@@ -184,6 +234,42 @@ def generate_launch_description():
             name='nav2_behavior_mode', 
             default_value='nav_to_pose',
             description='Navigation behavior mode to use'
+        ),
+
+        DeclareLaunchArgument(
+            name='log_level',
+            default_value='info',
+            description='log level'
+        ),
+    
+        DeclareLaunchArgument(
+            name='autostart',
+            default_value='true',
+            description='Automatically startup the nav2 stack'
+        ),
+
+        DeclareLaunchArgument(
+            name='use_composition',
+            default_value='True',
+            description='Whether to use composed bringup'
+        ),
+
+        DeclareLaunchArgument(
+            name='namespace',
+            default_value='',
+            description='Top-level namespace'
+        ),
+
+        DeclareLaunchArgument(
+            name='use_namespace',
+            default_value='False',
+            description='Whether to apply a namespace to the navigation stack'
+        ),
+
+        DeclareLaunchArgument(
+            name='use_respawn',
+            default_value='False',
+            description='Whether to respawn if a node crashes. Applied when composition is disabled.'
         ),
 
         SetParameter(name='use_sim_time', value=LaunchConfiguration("use_sim_time")),
