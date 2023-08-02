@@ -86,7 +86,8 @@ def generate_launch_description():
                 '/model/elsabot_4wd/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
                 '/world/empty/model/elsabot_4wd/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model',
                 '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-                '/navsat@sensor_msgs/msg/NavSatFix@gz.msgs.NavSat'
+                '/navsat@sensor_msgs/msg/NavSatFix@gz.msgs.NavSat',
+                'imu/mag@sensor_msgs/msg/MagneticField@gz.msgs.Magnetometer'
             ],
             parameters=[
                 {'qos_overrides./model/elsabot_4wd.subscriber.reliability': 'reliable'}
@@ -94,7 +95,7 @@ def generate_launch_description():
             remappings=[
                 ('/world/empty/model/elsabot_4wd/joint_state', 'joint_states'),
                 ('elsabot_4wd/base_footprint/navsat', 'gps_link'),
-                ('/navsat','/gps/fix'),
+                ('/navsat','/gps/fix')
             ],
             output='screen'
         ),

@@ -29,6 +29,37 @@
           <rpyOffset>0 0 0</rpyOffset>
           <initialOrientationAsReference>false</initialOrientationAsReference>
       </sensor>
+      <sensor name="magnetometer" type="magnetometer">
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <visualize>true</visualize>
+        <topic>imu/mag</topic>
+        <ignition_frame_id>imu_link</ignition_frame_id>
+        <enable_metrics>true</enable_metrics>
+        <magnetometer>
+          <x>
+            <noise type="none">
+            <!--noise type="gaussian"-->
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="none">
+            <!--noise type="gaussian"-->
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="none">
+            <!--noise type="gaussian"-->
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </z>
+        </magnetometer>
+      </sensor>
     </gazebo>
   </xacro:macro>
 </robot>
