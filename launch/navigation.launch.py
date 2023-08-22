@@ -46,7 +46,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import PushRosNamespace
 
 #change to the name of your own map here or specify map via param
-MAP_NAME='upstairs2'
+MAP_NAME='upstairs3'
 #MAP_NAME='backyard'
 #MAP_NAME='backyard_simple'
 #MAP_NAME='downstairs'

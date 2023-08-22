@@ -31,7 +31,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
-MAP_NAME='upstairs2'
+MAP_NAME='upstairs3'
 #MAP_NAME='backyard'
 #MAP_NAME='downstairs'
 
