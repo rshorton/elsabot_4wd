@@ -13,7 +13,7 @@
     <joint name="gps_to_base_link" type="fixed">
       <parent link="base_link"/>
       <child link="gps_link"/>
-      <origin xyz="-0.150 0.0 0.100" rpy="0 0 0"/>
+      <origin xyz="-0.195 0.0 0.685" rpy="0 0 0" />      
     </joint>
 
     <gazebo reference="gps_link">
