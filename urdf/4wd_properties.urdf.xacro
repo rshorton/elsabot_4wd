@@ -7,7 +7,7 @@
 
   <xacro:property name="wheel_radius" value="0.0795" />
   <xacro:property name="wheel_width" value="0.047" />
-  <xacro:property name="wheel_pos_x" value="0.1505" />
+  <xacro:property name="wheel_pos_x" value="0.175" />
   <xacro:property name="wheel_pos_y" value="0.1925" />
   <xacro:property name="wheel_pos_z" value="-0.1105" />
   <xacro:property name="wheel_mass" value=".6" />
