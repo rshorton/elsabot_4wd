@@ -1,0 +1,1 @@
+SUBSYSTEM=="i2c-dev", KERNELS=="i2c_designware.1", SYMLINK+="i2c-10"
