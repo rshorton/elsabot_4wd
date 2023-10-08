@@ -15,19 +15,23 @@
 # Various modifications by Scott Horton for Elsabot robots
 
 import os
+import tempfile
 
 from ament_index_python.packages import get_package_share_directory
 
-from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch import LaunchDescription, logging
+from launch.actions import IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, SetParameter
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 def generate_launch_description():
+
+    logger = logging.get_logger('launch.user')
 
     urdf_path = PathJoinSubstitution(
         [FindPackageShare('elsabot_4wd'), 'urdf/robots', f"4wd.urdf.xacro"]
@@ -43,6 +47,39 @@ def generate_launch_description():
 
     use_gps = LaunchConfiguration('use_gps')
 
+    rosbridge_launch_path = PathJoinSubstitution(
+        [FindPackageShare('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml']
+    )
+
+    # Read the world SDF file and update the latitude and longitude of the origin        
+    def prepare_sdf(context, *args, **kwargs):
+
+        world_path = os.path.join(get_package_share_directory('elsabot_4wd'), 'gazebo_worlds',
+            context.launch_configurations['world_sdf_file'])
+
+        with open(world_path) as f:
+            world_sdf = f.read()
+
+            world_sdf = world_sdf.replace('REPLACE_LATITUDE', context.launch_configurations['gps_origin_lat'])
+            world_sdf = world_sdf.replace('REPLACE_LONGITUDE', context.launch_configurations['gps_origin_lon'])
+            logger.debug("prepared world sdf:\n %s" % world_sdf)
+
+            prepared_sdf = tempfile.NamedTemporaryFile(mode='w', delete=False)
+            f = open(prepared_sdf.name, "w")
+            f.write(world_sdf)
+            f.close()
+
+            # Gazebo Sim
+            return IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')),
+                launch_arguments={
+                    #'gz_args': '-r empty.sdf'
+                    'gz_args': '-r ' +  prepared_sdf.name
+                }.items(),
+            ),   
+
+
     return LaunchDescription([
         SetParameter(name='use_sim_time', value=True),
 
@@ -52,15 +89,25 @@ def generate_launch_description():
             description='Set to True to use GPS'
         ),
 
-        # Gazebo Sim
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')),
-            launch_arguments={
-                #'gz_args': '-r empty.sdf'
-                'gz_args': '-r ' +  os.path.join(get_package_share_directory('elsabot_4wd'), 'gazebo_worlds', 'my_world4.sdf')
-            }.items(),
-        ),   
+        DeclareLaunchArgument(
+            name='world_sdf_file', 
+            default_value='my_world4.sdf',
+            description='Default world SDF file'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_origin_lat', 
+            default_value='30.609866',
+            description='Latitude of origin when using GPU'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_origin_lon', 
+            default_value='-96.340424',
+            description='Longitude of origin when using GPU'
+        ),
+
+        OpaqueFunction(function=prepare_sdf),
 
         # Robot            
         Node(package='ros_gz_sim', executable='create',
@@ -188,6 +235,12 @@ def generate_launch_description():
                 ('odometry/gps', 'odometry/gps'),
             ],
             arguments=['--ros-args', '--log-level', 'info'],
+        ),
+
+        # web bridge (for proxying topics/actions to/from ros_web based applications)
+        IncludeLaunchDescription(
+            XMLLaunchDescriptionSource(rosbridge_launch_path)
         )
+
     ])
   
