@@ -33,23 +33,7 @@ def generate_launch_description():
 
     logger = logging.get_logger('launch.user')
 
-    urdf_path = PathJoinSubstitution(
-        [FindPackageShare('elsabot_4wd'), 'urdf/robots', f"4wd.urdf.xacro"]
-    )
-
-    sensors_launch_path = PathJoinSubstitution(
-        [FindPackageShare('elsabot_4wd'), 'launch', 'sensors.launch.py']
-    )
-
-    description_launch_path = PathJoinSubstitution(
-        [FindPackageShare('elsabot_4wd'), 'launch', 'description.launch.py']
-    )
-
     use_gps = LaunchConfiguration('use_gps')
-
-    rosbridge_launch_path = PathJoinSubstitution(
-        [FindPackageShare('rosbridge_server'), 'launch', 'rosbridge_websocket_launch.xml']
-    )
 
     # Read the world SDF file and update the latitude and longitude of the origin        
     def prepare_sdf(context, *args, **kwargs):
@@ -62,7 +46,7 @@ def generate_launch_description():
 
             world_sdf = world_sdf.replace('REPLACE_LATITUDE', context.launch_configurations['gps_origin_lat'])
             world_sdf = world_sdf.replace('REPLACE_LONGITUDE', context.launch_configurations['gps_origin_lon'])
-            logger.debug("prepared world sdf:\n %s" % world_sdf)
+            logger.info("prepared world sdf:\n %s" % world_sdf)
 
             prepared_sdf = tempfile.NamedTemporaryFile(mode='w', delete=False)
             f = open(prepared_sdf.name, "w")
@@ -98,13 +82,13 @@ def generate_launch_description():
         DeclareLaunchArgument(
             name='gps_origin_lat', 
             default_value='30.609866',
-            description='Latitude of origin when using GPU'
+            description='Latitude of origin when using GPS'
         ),
 
         DeclareLaunchArgument(
             name='gps_origin_lon', 
             default_value='-96.340424',
-            description='Longitude of origin when using GPU'
+            description='Longitude of origin when using GPS'
         ),
 
         OpaqueFunction(function=prepare_sdf),
@@ -122,6 +106,7 @@ def generate_launch_description():
         ),
 
         # Bridge
+        # The topics used were selected to mirror those used by the real Elsabot robot
         Node(
             package='ros_gz_bridge',
             executable='parameter_bridge',
@@ -142,105 +127,11 @@ def generate_launch_description():
             remappings=[
                 ('/world/empty/model/elsabot_4wd/joint_state', 'joint_states'),
                 ('elsabot_4wd/base_footprint/navsat', 'gps_link'),
-                ('/navsat','/gps/fix')
+                ('/navsat','/gps/fix'),
+                # Seemed to have trouble setting the topic in the urdf to /imu/data_raw so just remap it here
+                ('/imu/data','/imu/data_raw')
             ],
             output='screen'
         ),
-
-        # Robot description
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(description_launch_path),
-            launch_arguments={
-                'use_sim_time': 'true',
-                'publish_joints': 'true',
-            }.items()
-        ),
-
-        # Node for sending cmd_vel 'stop' if no new cmd_vel updates
-        Node(
-            package='cmd_vel_timeout',
-            executable='command_timeout',
-            name='command_timeout_node',
-            output='screen',
-        ),
-
-        # Robot localization for fusing IMU with base odometry (when not using GPS)
-        Node(
-            condition=IfCondition(
-                PythonExpression([
-                    'not ',
-                    use_gps,
-                ])
-            ),
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[
-                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf.yaml'])
-            ],
-            remappings=[
-                ('odometry/filtered', 'odometry/local')
-            ]
-        ),
-
-        # Fuse IMU with base odometry (when using GPS)
-        Node(
-            condition=IfCondition(LaunchConfiguration('use_gps')),
-            package='robot_localization',
-            executable='ekf_node',
-            name='local_ekf_filter_node',
-            output='screen',
-            parameters=[
-                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
-            ],
-            remappings=[
-                ('odometry/filtered', 'odometry/local')
-            ]
-        ),
-
-        # Fuse GPS with base odometry and IMU (when using GPS)
-        Node(
-            condition=IfCondition(LaunchConfiguration('use_gps')),
-            package='robot_localization',
-            executable='ekf_node',
-            name='global_ekf_filter_node',
-            output='screen',
-            parameters=[
-                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
-            ],
-            remappings=[
-                ('odometry/filtered', 'odometry/global')
-            ]
-        ),
-
-        # Run NavSat transform for converting GPS coords into UTM coords
-        # and offseting to the initial position
-        Node(
-            condition=IfCondition(LaunchConfiguration('use_gps')),
-            package='robot_localization',
-            executable='navsat_transform_node',
-            name='navsat_transform_node',
-            output='screen',
-            parameters=[
-                PathJoinSubstitution([FindPackageShare('elsabot_4wd'), 'config', 'ekf_with_gps.yaml'])
-            ],
-            remappings=[
-                # Subs
-                ('gps/fix', 'gps/fix'),
-                ('imu', 'imu/data'),
-                ('odometry/filtered', 'odometry/global'),
-                # Pubs
-                ('gps/filtered', 'gps/filtered'),
-                ('odometry/gps', 'odometry/gps'),
-            ],
-            arguments=['--ros-args', '--log-level', 'info'],
-        ),
-
-        # web bridge (for proxying topics/actions to/from ros_web based applications)
-        IncludeLaunchDescription(
-            XMLLaunchDescriptionSource(rosbridge_launch_path)
-        )
-
     ])
   

@@ -23,13 +23,13 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
 
 MAP_NAME='upstairs3'
 #MAP_NAME='backyard'
@@ -38,6 +38,10 @@ MAP_NAME='upstairs3'
 def generate_launch_description():
 
     elsabot_4wd_dir = get_package_share_directory('elsabot_4wd')
+
+    gazebo_launch_path = PathJoinSubstitution(
+        [FindPackageShare('elsabot_4wd'), 'launch', 'gazebo.launch.py']
+    )
 
     sensors_launch_path = PathJoinSubstitution(
         [FindPackageShare('elsabot_4wd'), 'launch', 'sensors.launch.py']
@@ -64,7 +68,45 @@ def generate_launch_description():
     with open(cmd_vel_mux_config_file, 'r') as f:
         cmd_vel_mux_config = yaml.safe_load(f)['cmd_vel_mux']['ros__parameters']
 
+    # use_gazebo configures for Gazebo instead of the real robot
+    use_gazebo = LaunchConfiguration('use_gazebo')
+    # launch_gazebo actually launches Gazebo.  This can be false with use_gazebo
+    # in case you want to run Gazebo on a more powerful dev machine while running
+    # everything else on the robot computer.
+    launch_gazebo = LaunchConfiguration('launch_gazebo')
+    use_gps = LaunchConfiguration('use_gps')
+
     return LaunchDescription([
+        DeclareLaunchArgument(
+            name='use_gazebo', 
+            default_value='False',
+            description='Set to True to use Gazebo instead of real robot.'
+        ),
+
+        DeclareLaunchArgument(
+            name='launch_gazebo', 
+            default_value='False',
+            description='Set to True to launch Gazebo.'
+        ),
+
+        DeclareLaunchArgument(
+            name='world_sdf_file', 
+            default_value='my_world4.sdf',
+            description='Default world SDF file when using Gazebo'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_origin_lat', 
+            default_value='30.609866',
+            description='Latitude of origin when using GPS with Gazebo'
+        ),
+
+        DeclareLaunchArgument(
+            name='gps_origin_lon', 
+            default_value='-96.340424',
+            description='Longitude of origin when using GPS with Gazebo'
+        ),
+
         DeclareLaunchArgument(
             name='use_gps', 
             default_value='False',
@@ -87,18 +129,6 @@ def generate_launch_description():
             name='nav2_params_file',
             default_value=os.path.join(elsabot_4wd_dir, 'config', 'navigation.yaml'),
             description='Full path to the ROS2 parameters file to use for all launched nodes'
-        ),
-
-        DeclareLaunchArgument(
-            name='use_sim_time',
-            default_value='false',
-            description='Use simulation (Gazebo) clock if true'
-        ),
-
-        DeclareLaunchArgument(
-            name='autostart',
-            default_value='true',
-            description='Automatically startup the nav2 stack'
         ),
 
         DeclareLaunchArgument(
@@ -137,7 +167,16 @@ def generate_launch_description():
             description='Run rviz'
         ),
 
+        DeclareLaunchArgument(
+            name='use_rosbridge', 
+            default_value='True',
+            description='Set to True launch ROS bridge'
+        ),
+
+        SetParameter(name='use_sim_time', value=LaunchConfiguration('use_gazebo')),
+
         Node(
+            condition=UnlessCondition(LaunchConfiguration('use_gazebo')),
             package='micro_ros_agent',
             executable='micro_ros_agent',
             name='micro_ros_agent',
@@ -146,11 +185,28 @@ def generate_launch_description():
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(description_launch_path)
+            PythonLaunchDescriptionSource(gazebo_launch_path),
+            condition=IfCondition(LaunchConfiguration('launch_gazebo')),
+            launch_arguments={
+                'use_gps': LaunchConfiguration('use_gps'),
+                'world_sdf_file': LaunchConfiguration('world_sdf_file'),
+                'gps_origin_lat': LaunchConfiguration('gps_origin_lat'),
+                'gps_origin_lon': LaunchConfiguration('gps_origin_lon')
+            }.items()
+        ),
+
+        # Robot description
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(description_launch_path),
+            launch_arguments={
+                'use_sim_time': 'true',
+                'publish_joints': 'true'
+            }.items()
         ),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(sensors_launch_path),
+            condition=UnlessCondition(LaunchConfiguration('use_gazebo')),
         ),
 
         IncludeLaunchDescription(
@@ -175,7 +231,7 @@ def generate_launch_description():
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'navigation.launch.py')),
             condition=IfCondition(LaunchConfiguration('use_nav')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'use_sim_time': LaunchConfiguration('use_gazebo'),
                 'map': LaunchConfiguration('map'),
                 'slam': LaunchConfiguration('slam'),
                 'use_gps': LaunchConfiguration('use_gps')
@@ -188,8 +244,8 @@ def generate_launch_description():
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'keep_out_area.launch.py')),
             condition=IfCondition(LaunchConfiguration('use_keep_out')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'autostart': LaunchConfiguration('autostart')
+                'use_sim_time': LaunchConfiguration('use_gazebo'),
+                'autostart': 'True'
             }.items()
         ),
 
@@ -197,7 +253,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'sensor_fusion.launch.py')),
             launch_arguments={
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'use_sim_time': LaunchConfiguration('use_gazebo'),
                 'use_gps': LaunchConfiguration('use_gps'),
             }.items()
         ),
@@ -205,10 +261,17 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('elsabot_4wd'), 'launch', 'gps.launch.py')),
+            condition=IfCondition(
+                PythonExpression([
+                    'not ',
+                    use_gazebo,
+                    ' and ',
+                    use_gps
+                ])
+            ),
             launch_arguments={
                'use_gps_rtk': LaunchConfiguration('use_gps_rtk')
             }.items(),
-            condition=IfCondition(LaunchConfiguration('use_gps'))
         ),
 
         Node(
@@ -218,11 +281,12 @@ def generate_launch_description():
             name='rviz2',
             output='screen',
             arguments=['-d', rviz_config_path],
-            parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}]
+            parameters=[{'use_sim_time': LaunchConfiguration('use_gazebo')}]
         ),
 
         # web bridge (for proxying topics/actions to/from ros_web based applications)
         IncludeLaunchDescription(
-            XMLLaunchDescriptionSource(rosbridge_launch_path)
+            XMLLaunchDescriptionSource(rosbridge_launch_path),
+            condition=IfCondition(LaunchConfiguration('use_rosbridge'))
         )
     ])
