@@ -5,9 +5,8 @@ global_costmap:
   global_costmap:
     ros__parameters:
       rolling_window: true
-      width: 10
-      height: 10
+      width: 50
+      height: 50
+      track_unknown_space: false
       # Removed "static_layer" for gps mode
       plugins: ["obstacle_layer", "voxel3d_layer", "inflation_layer"]
-
-
