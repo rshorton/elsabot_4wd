@@ -237,6 +237,17 @@ The Google Earth Pro application can be used to visualize the location and orien
 
 ### Navigating a sequence of way points selected using Google Earth Pro
 
+These steps use the `elsabot_bt` package to command the Nav2 stack to follow a path defined using Google Earth Pro.
 
+1. Use the `Add Path` tool of Google Earth Pro to define a path of two or more points.
+
+2. Right click the path as listed in the `Places` list and save as a `KML` file ***(not KMZ)***.
+
+3. Edit the behavior tree file `bt_xml/bt_test_gps_waypoint_nav.xml` of the `elsabot_bt` package to specify the KML file(s) created in step 2.  This is a simple behavior tree that just reads GPS points of a KML path file, converts to robot relative positions, and then commands Nav2 to navigate thru those points.  The default file navigates two paths.
+
+4. Run the elsabot_bt node:
+   ```
+   ros2 launch elsabot_bt elsabot_bt.launch.py use_sim_time:=False only_bt:=True bt_xml:=<full path to bt_test_gps_waypoint_nav.xml> bt_use_std_out_logger:=True log_level:=info
+   ```
 
 
