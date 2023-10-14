@@ -24,6 +24,7 @@
   <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>cmd_vel_mux</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
