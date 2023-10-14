@@ -6,9 +6,15 @@ imu_filter:
     constant_dt: 0.0
     publish_debug_topics: false
     world_frame: "enu"
-    gain: 0.01
+    gain: 0.15
     zeta: 0.0
-    mag_bias_x: -0.000016
-    mag_bias_y: -0.00000044
-    mag_bias_z:  0.0001140
+
+    # Hard and soft iron correction done by IMU driver in uC code.
+    mag_bias_x: 0.0
+    mag_bias_y: 0.0
+    mag_bias_z: 0.0
     orientation_stddev: 0.0
+    yaw_offset: 0.0
+    # -0.0468 for location.  Specify as positive
+    # since it appears the filter subtracts the offset.
+    declination: 0.0468
