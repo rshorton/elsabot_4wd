@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
@@ -15,6 +15,14 @@ def generate_launch_description():
             default_value='False',
             description='Set to True to use GPS'
         ),
+
+        DeclareLaunchArgument(
+            name='use_sim_time', 
+            default_value='false',
+            description='Use simulation time'
+        ),
+
+        SetParameter(name='use_sim_time', value=LaunchConfiguration("use_sim_time")),
 
         # IMU data filtering
         Node(
@@ -54,6 +62,9 @@ def generate_launch_description():
             ]
         ),
 
+        #
+        # Robot localization doc:  http://docs.ros.org/en/noetic/api/robot_localization/html/index.html
+        #
         # Fuse IMU with base odometry (when using GPS)
         Node(
             condition=IfCondition(LaunchConfiguration('use_gps')),
@@ -98,6 +109,7 @@ def generate_launch_description():
             remappings=[
                 # Subs
                 ('gps/fix', 'gps/fix'),
+                # navsat_transform_node uses imu contrary to doc
                 ('imu', 'imu/data'),
                 ('odometry/filtered', 'odometry/global'),
                 # Pubs
