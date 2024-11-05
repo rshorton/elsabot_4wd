@@ -6,14 +6,14 @@ from launch import LaunchDescription
 from launch_ros.actions import Node 
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, EnvironmentVariable
 
 def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
             name='gps_serial_port_nmea', 
-            default_value='/dev/PX1122R_gps',
+            default_value=[EnvironmentVariable('PX1122R_GPS_SERIAL_DEVICE'), ''],
             description='Serial port connected to GPS module'
         ),
 
@@ -23,9 +23,10 @@ def generate_launch_description():
             description='Baud rate of GPS serial port'
         ),
 
+        # Value is like this: serial://ttyUSB0:115200#rtcm1
         DeclareLaunchArgument(
-            name='gps_rtcm_input_desc', 
-            default_value='serial://PX1122R_gps_rtcm:115200#rtcm1',
+            name='gps_rtcm_input_desc',
+            default_value=[EnvironmentVariable('PX1122R_GPS_INPUT_DESC'), ''],
             description='str2str output description'
         ),
 

@@ -1,28 +1,29 @@
-SUBSYSTEM=="tty", ATTRS{idVendor}=="16c0",ATTRS{idProduct}=="0483", SYMLINK+="teensy"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="16c0",ATTRS{idProduct}=="0483", SYMLINK+="elsabot_dev_links/teensy"
 
-# USB port/device mapping when connected to right-side USB-A of SBC
-#KERNEL=="ttyUSB*", KERNELS=="1-1.3", SYMLINK+="head_servo_driver", MODE="0666"
-#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.4", SYMLINK+="PX1122R_gps", MODE="0666"
-#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.3", SYMLINK+="rplidar", MODE="0666"
-#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.1", SYMLINK+="PX1122R_gps_rtcm", MODE="0666"
+# USB hub using right-side USB-A
+#KERNEL=="ttyUSB*", KERNELS=="1-1.3", SYMLINK+="elsabot_dev_links/head_servo_driver", MODE="0666"
+#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.4", SYMLINK+="elsabot_dev_links/PX1122R_gps", MODE="0666"
+#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.1", SYMLINK+="elsabot_dev_links/PX1122R_gps_rtcm", MODE="0666"
+#KERNEL=="ttyUSB*", KERNELS=="1-1.1.1.3", SYMLINK+="elsabot_dev_links/rplidar", MODE="0666"
 
-# USB port/device mapping hub when connected to left-side USB-A of SBC
-KERNEL=="ttyUSB*", KERNELS=="1-3.3", SYMLINK+="head_servo_driver", MODE="0666"
-KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.4", SYMLINK+="PX1122R_gps", MODE="0666"
-KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.3", SYMLINK+="rplidar", MODE="0666"
-KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.1", SYMLINK+="PX1122R_gps_rtcm", MODE="0666"
+# USB hub using left-back USB-A
+KERNEL=="ttyUSB*", KERNELS=="1-3.3", SYMLINK+="elsabot_dev_links/head_servo_driver", MODE="0666"
+KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.4", SYMLINK+="elsabot_dev_links/PX1122R_gps", MODE="0666"
+KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.1", SYMLINK+="elsabot_dev_links/PX1122R_gps_rtcm", MODE="0666"
+KERNEL=="ttyUSB*", KERNELS=="1-3.1.1.3", SYMLINK+="elsabot_dev_links/rplidar", MODE="0666"
 
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1546",ATTRS{idProduct}=="01a7", SYMLINK+="ublox7_gps"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1546",ATTRS{idProduct}=="01a7", SYMLINK+="elsabot_dev_links/ublox7_gps"
 
 #Not unique enough - use port assignment
-#SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4",ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4",ATTRS{idProduct}=="ea60", SYMLINK+="elsabot_dev_links/rplidar"
 
 # On Create base
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403",ATTRS{idProduct}=="6015", SYMLINK+="create2"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403",ATTRS{idProduct}=="6015", SYMLINK+="elsabot_dev_links/create2"
 
-# Alt servo driver (used for xArm)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="servo_driver"  MODE="0666"
+# Alt servo driver (used for arm)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="elsabot_dev_links/servo_driver"  MODE="0666"
 # Other
-#SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="tty_arduino_nano"
-#SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="003d", SYMLINK+="ttyACM0Due0"
-#SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="003e", SYMLINK+="ttyACM0Due1"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="elsabot_dev_links/tty_arduino_nano"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="003d", SYMLINK+="elsabot_dev_links/ttyACM0Due0"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="003e", SYMLINK+="elsabot_dev_links/ttyACM0Due1"
+

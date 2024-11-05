@@ -1,80 +1,61 @@
 # Elsabot 4WD Robot
 
-Top-level bring up scripts for the 4WD base version of the Elsabot robot.  
+ROS2 Jazzy Support
+
+Top-level bring up scripts for the 4WD base (skid steer) version of the Elsabot robot.  
 
 Some parts of these scripts and configuration files are from the Linorobot2 project:  https://github.com/linorobot/linorobot2
 
 The firmware for the base microcontroller is based on the linorobot2_hardware project.  See this fork for the firmware used for the Elsabot 4WD base (master branch): https://github.com/rshorton/linorobot2_hardware.
 
-</br>
 
 ***
 ## Installation
 
-ROS Humble
-* https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html
-    
-* The desktop install was used, but a minimal install should work also (and then run RVIZ on your devel computer instead).
+#### On Elsabot Robot
 
-Nav2
-```
-sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup 
-```
+Use/customize the Elsabot Docker for setting-up a ROS2 environment with the packages needed for the Elsabot related packages.  Be sure to revise the 'device_env_vars.env' file to specify the various devices used.  Also verify the 'run_ros_docker.sh' script maps your devices.
+
+Clone this repo and the cmd_vel_mux repo from https://github.com/rshorton/cmd_vel_mux
+
+Use the instructions in the Elsabot Docker readme to prepare the list of ROS deps and update the docker image with those packages.  After that, build this package and cmd_vel_mux.
 
 micro-ROS and agent
-* Used the 'Building' steps from https://github.com/micro-ROS/micro_ros_setup/blob/humble/README.md
+* Use the 'Building' steps from https://github.com/micro-ROS/micro_ros_setup/blob/humble/README.md
 
-Other
-```
-sudo apt install ros-humble-rplidar-ros
-sudo apt install ros-humble-laser-filters
-sudo apt install ros-humble-joint-state-publisher
-sudo apt install ros-humble-rosbridge-suite
-sudo apt install ros-humble-robot-localization
-sudo apt install ros-humble-joy-linux
-sudo apt install ros-humble-imu-filter-madgwick
-```
-Clone and build:
+#### On Development Machine
+* Install full ROS Jazzy install
+* Run RVIZ on that machine.
 
-* Fork of cmd_vel_mux package:  https://github.com/rshorton/cmd_vel_mux
+#### Other Setup on Robot computer
 
-
-Development Machine
-* Installed full ROS Humble install
-* Used RVIZ on this machine.
-
-Other Setup on Robot computer
-
-* udev rules, /etc/udev/rules.d/99-usb-serial.rules 
-
-  * SUBSYSTEM=="tty", ATTRS{idVendor}=="16c0",ATTRS{idProduct}=="0483", SYMLINK+="teensy"
-  * SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4",ATTRS{idProduct}=="ea60", SYMLINK+="rplidar"
-  * See other examples in hwsetup/99-usb-serial.rules.  Some of the rules assign to specific ports since some devices use the same type of USB-to-serial controller that appear identical.
-
+* udev rules, see hwsetup folder
 * teleop Controller
   * Bluetooth game controller paired to the robot computer.
 
-<br/>
 
 ***
 ## Running
 
-### Start base functionality using shell 1:
+1. Start base functionality:
 
 ```
+elsabot_docker/run_ros_docker.sh
 ros2 launch elsabot_4wd bringup.launch.py
-```    
+```     
 By default this will also launch joystick teleop so you can use a game controller to manually control the robot.
 
-### Start navigation using shell 2:
+2. Start navigation using another shell
 ```
-ros2 launch elsabot_4wd navigation.launch.py
+elsabot_docker/open_shell.sh
+ros2 launch elsabot_4wd navigation.launch.py cmd_vel_topic:=cmd_vel/nav
 ```
 
 ### Start RVIZ on development host  
 ```
 rviz2
 ```
+* Load the rviz/navigation.rviz config file from this project.
 * Use RVIZ to set initial position and then issue nav commands.
   
   <br/>
@@ -83,7 +64,7 @@ rviz2
 
 Replace navigation.launch.py above with this instead:
 ```  
-ros2 launch elsabot_4wd slam.launch.py rviz:=false
+ros2 launch elsabot_4wd slam.launch.py rviz:=false cmd_vel_topic:=cmd_vel/nav
 ```
 Move robot around using telop to build the map, and then save the map using:
 ```
@@ -98,7 +79,7 @@ ros2 run nav2_map_server map_saver_cli -f <path_to/elsabot_4wd/maps/your_map_nam
 
 ### Start base functionality using shell 1:
 ```
-export IGN_GAZEBO_RESOURCE_PATH=<path_to workspace/src>
+export GZ_SIM_RESOURCE_PATH=<path_to workspace/src>
 ros2 launch elsabot_4wd bringup.launch.py use_gazebo:=True launch_gazebo:=True
 ```
 ### Start navigation using shell 2:

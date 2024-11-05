@@ -37,19 +37,20 @@ import tempfile
 
 from launch import LaunchDescription, logging
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, GroupAction
-from launch.substitutions import LaunchConfiguration, NotSubstitution, AndSubstitution
+from launch.substitutions import LaunchConfiguration, NotSubstitution, AndSubstitution, PathJoinSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node, SetParameter
 from nav2_common.launch import RewrittenYaml
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import PushRosNamespace
+from launch_ros.substitutions import FindPackageShare
 
 #change to the name of your own map here or specify map via param
 MAP_NAME='upstairs3'
 #MAP_NAME='backyard'
 #MAP_NAME='backyard_simple'
-#MAP_NAME='downstairs'
+#MAP_NAME='downstairs2'
 
 def generate_launch_description():
 
@@ -77,6 +78,10 @@ def generate_launch_description():
     use_respawn = LaunchConfiguration('use_respawn')
     log_level = LaunchConfiguration('log_level')
     use_composition = LaunchConfiguration('use_composition')
+
+    nav2_launch_path = PathJoinSubstitution(
+        [FindPackageShare('nav2_bringup'), 'launch', 'bringup_launch.py']
+    )
 
     # Use an OpaqueFunction to prepare the nav config and select the behavior tree
     # suitable for the specified launch options.  The OpaqueFunction allows the launch options
@@ -197,7 +202,20 @@ def generate_launch_description():
                 )
             ])
         ]
+        HIDE_descriptions = [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(nav2_launch_path),
+                launch_arguments={
+                    'use_sim_time': LaunchConfiguration("use_sim_time"),
+                    'map': default_map_path,
+                    'slam': slam,
+                    'log_level': "info",
+                    'params_file': nav2_config_file
+                }.items()
+            )
+        ]
         return descriptions;
+
 
     return LaunchDescription([
         DeclareLaunchArgument(

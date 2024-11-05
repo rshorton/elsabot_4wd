@@ -29,7 +29,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution, EnvironmentVariable
 
 MAP_NAME='upstairs3'
 #MAP_NAME='backyard'
@@ -151,7 +151,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             name='base_serial_port', 
-            default_value='/dev/teensy',
+            default_value=[EnvironmentVariable('TEENSY_SERIAL_DEVICE'), ''],
             description='Linorobot Base Serial Port'
         ),
 
@@ -162,7 +162,7 @@ def generate_launch_description():
         ),
 
         DeclareLaunchArgument(
-            name='rviz', 
+            name='rviz',
             default_value='false',
             description='Run rviz'
         ),
@@ -200,7 +200,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(description_launch_path),
             launch_arguments={
                 'use_sim_time': 'true',
-                'publish_joints': 'true'
+                'publish_joints': 'false'
             }.items()
         ),
 
