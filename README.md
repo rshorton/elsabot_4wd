@@ -21,7 +21,7 @@ Clone this repo and the cmd_vel_mux repo from https://github.com/rshorton/cmd_ve
 Use the instructions in the Elsabot Docker readme to prepare the list of ROS deps and update the docker image with those packages.  After that, build this package and cmd_vel_mux.
 
 micro-ROS and agent
-* Use the 'Building' steps from https://github.com/micro-ROS/micro_ros_setup/blob/humble/README.md
+* See Elsabot Docker readme
 
 #### On Development Machine
 * Install full ROS Jazzy install
