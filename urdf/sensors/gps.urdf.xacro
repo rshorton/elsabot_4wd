@@ -21,7 +21,7 @@
         <always_on>1</always_on>
         <update_rate>2</update_rate>
         <topic>navsat</topic>
-        <ignition_frame_id>gps_link</ignition_frame_id>
+        <gz_frame_id>gps_link</gz_frame_id>
       </sensor>
     </gazebo>
 

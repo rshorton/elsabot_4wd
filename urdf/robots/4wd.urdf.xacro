@@ -10,6 +10,7 @@
   <!--xacro:include filename="$(find elsabot_4wd)/urdf/sensors/depth_sensor.urdf.xacro" /-->
   <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/oakd_on_ptbase.urdf.xacro" />
   <xacro:include filename="$(find elsabot_4wd)/urdf/controllers/skid_steer.urdf.xacro" />
+  <xacro:include filename="$(find elsabot_4wd)/urdf/sensors/nav_camera.urdf.xacro" />
 
   <xacro:base 
     length="${base_length}" 
@@ -70,6 +71,8 @@
     <xacro:insert_block name="depth_sensor_pose" />
   </xacro:depth_sensor>
 
+  <xacro:nav_camera/>
+
  <xacro:diff_drive_controller
     wheel_separation="${wheel_pos_y * 2}"
     wheel_radius="${wheel_radius}"
@@ -77,7 +80,6 @@
   />
 
   <gazebo>
-    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher"/>
     <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>

@@ -35,6 +35,18 @@ def generate_launch_description():
 
     use_gps = LaunchConfiguration('use_gps')
 
+    description_launch_path = PathJoinSubstitution(
+        [FindPackageShare('elsabot_4wd'), 'launch', 'description.launch.py']
+    )
+
+    description = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(description_launch_path),
+        launch_arguments={
+            'use_sim_time': 'true',
+            'publish_joints': 'true',
+        }.items()
+    )
+
     # Read the world SDF file and update the latitude and longitude of the origin        
     def prepare_sdf(context, *args, **kwargs):
 
@@ -116,22 +128,28 @@ def generate_launch_description():
                 '/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
                 '/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU',
                 '/model/elsabot_4wd/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
-                '/world/empty/model/elsabot_4wd/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model',
+                '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
                 '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
                 '/navsat@sensor_msgs/msg/NavSatFix@gz.msgs.NavSat',
-                'imu/mag@sensor_msgs/msg/MagneticField@gz.msgs.Magnetometer'
+                'imu/mag@sensor_msgs/msg/MagneticField@gz.msgs.Magnetometer',
+                '/camera/image@sensor_msgs/msg/Image@gz.msgs.Image',
+                '/nav_camera/image@sensor_msgs/msg/Image@gz.msgs.Image'
             ],
             parameters=[
                 {'qos_overrides./model/elsabot_4wd.subscriber.reliability': 'reliable'}
             ],
             remappings=[
-                ('/world/empty/model/elsabot_4wd/joint_state', 'joint_states'),
                 ('elsabot_4wd/base_footprint/navsat', 'gps_link'),
                 ('/navsat','/gps/fix'),
+                ('/model/elsabot_4wd/tf', 'tf'),
                 # Seemed to have trouble setting the topic in the urdf to /imu/data_raw so just remap it here
                 ('/imu/data','/imu/data_raw')
             ],
             output='screen'
         ),
+
+        description
+
+
     ])
   

@@ -8,6 +8,23 @@
           <cylinder radius="${radius}" length="${width}"/>
         </geometry>
       </collision>
+      <!--visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${radius}" length="${width}"/>           
+        </geometry>
+        <material name="black">
+            <color rgba="0.0 0.0 0.0 1.0"/>
+        </material>
+      </visual-->
+      <surface>
+        <friction>
+          <ode>
+            <mu>0.8</mu>
+            <mu2>0.8</mu2>
+          </ode>
+        </friction>
+      </surface>
 
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>

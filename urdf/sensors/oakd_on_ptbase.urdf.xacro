@@ -119,6 +119,30 @@
       <child link="oakd_right_camera" />
     </joint>
 
+
+    <!-- https://github.com/ros-simulation/gazebo_ros_pkgs/wiki/ROS-2-Migration:-Camera#gazebo_ros_camera -->
+    <!--gazebo reference="oakd_center_camera">
+      <sensor name="camera" type="camera">
+        <always_on>true</always_on>
+        <update_rate>10.0</update_rate>
+
+        <gz_frame_id>camera_link_optical</gz_frame_id>
+        <topic>camera/image</topic>
+        <horizontal_fov>1.50098</horizontal_fov>
+        <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+        </image>
+        <clip>
+            <near>0.02</near>
+            <far>300</far>
+        </clip>        
+
+      </sensor>
+
+    </gazebo-->
+
   </xacro:macro>
 </robot>
   

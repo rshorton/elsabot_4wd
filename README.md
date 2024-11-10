@@ -79,8 +79,8 @@ ros2 run nav2_map_server map_saver_cli -f <path_to/elsabot_4wd/maps/your_map_nam
 
 ### Start base functionality using shell 1:
 ```
-export GZ_SIM_RESOURCE_PATH=<path_to workspace/src>
-ros2 launch elsabot_4wd bringup.launch.py use_gazebo:=True launch_gazebo:=True
+   export GZ_SIM_RESOURCE_PATH=<path_to workspace/src>
+   ros2 launch elsabot_4wd gazebo.launch.py
 ```
 ### Start navigation using shell 2:
 ```

@@ -10,7 +10,7 @@
   <xacro:property name="wheel_pos_x" value="0.175" />
   <xacro:property name="wheel_pos_y" value="0.1925" />
   <xacro:property name="wheel_pos_z" value="-0.1105" />
-  <xacro:property name="wheel_mass" value=".6" />
+  <xacro:property name="wheel_mass" value="0.6" />
   <xacro:property name="wheel_torque" value="12" />
 
   <xacro:property name="laser_pose">
