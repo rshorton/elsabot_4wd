@@ -47,9 +47,9 @@ from launch_ros.actions import PushRosNamespace
 from launch_ros.substitutions import FindPackageShare
 
 #change to the name of your own map here or specify map via param
-#MAP_NAME='upstairs3'
+MAP_NAME='upstairs_1111'
 #MAP_NAME='backyard'
-MAP_NAME='backyard_simple'
+#MAP_NAME='backyard_simple'
 #MAP_NAME='downstairs'
 
 def generate_launch_description():
